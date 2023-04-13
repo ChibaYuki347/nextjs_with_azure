@@ -1,38 +1,40 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 本レポジトリの目的
 
-## Getting Started
+next.jsをAzure App Serviceで動かすための方法をまとめる。
+なお、本レポジトリでは小規模運用を想定しており、DockerやKubernetesといったコンテナ活用をスコープとしていない。
+別途レポジトリを整備する予定。
 
-First, run the development server:
+# 開発サーバー
 
-```bash
+プロジェクトルートレベルで下記を実行する。
+
+```
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+# インフラの初期化
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+ルートディレクトリにARMテンプレートであるazuredeploy.jsonを利用してAzureリソースを初期化できる。
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+ARMテンプレートは、JSON形式のファイルで、リソースグループ、App Serviceプラン、WebアプリなどのAzureリソースを定義。
+本ARMテンプレートでは東日本リージョンにBasicレベルでLinuxのNode.jsの18のリソースを作成する。
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+以下は、このARMテンプレートの各セクションの簡単な説明。
 
-## Learn More
+`$schema`：テンプレートのスキーマへのリンク。これは、テンプレート検証のために使用される。
 
-To learn more about Next.js, take a look at the following resources:
+`contentVersion`：テンプレートのバージョン。これは開発者が追跡や管理を容易にするために使用される。
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`parameters`：テンプレートで使用される入力パラメータを定義します。このテンプレートでは、`resourceGroupName`、`appServicePlanName`、および`webAppName`の3つのパラメータが定義されている。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+`resources`：デプロイされるAzureリソースを定義するセクション。このテンプレートでは、2つのリソースが定義されている。
 
-## Deploy on Vercel
+App Serviceプラン（Microsoft.Web/serverfarms）: B1 SKU（Basic）を持つLinuxベースのApp Serviceプランを作成する。 
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+App Serviceプランは、Webアプリのリソースを確保するために使用されます。
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+Webアプリ（Microsoft.Web/sites）: Node.jsランタイムを使用して実行されるWebアプリを作成する。  
+
+Webアプリは、先に作成されたApp Serviceプランに依存する。（dependsOnセクション参照）。また、siteConfigプロパティを通じて、アプリ設定とランタイムバージョンが定義されています。
+このARMテンプレートを使用すると、Azureリソースのデプロイが簡単に自動化できます。通常、このテンプレートはAzure DevOpsやGitHub ActionsなどのCI/CDパイプラインと組み合わせて使用される。

@@ -1,0 +1,27 @@
+trigger:
+  branches:
+    include:
+    - development
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+jobs:
+- job: DeployInfrastructure
+  displayName: 'Deploy Azure Infrastructure'
+  steps:
+  - checkout: self
+  - task: AzureResourceManagerTemplateDeployment@3
+    inputs:
+      deploymentScope: 'Resource Group'
+      azureResourceManagerConnection: 'EX-AZURE-AND-ADO' # Azureサブスクリプション名またはサービス接続名を指定します。
+      subscriptionId: 'f13a48a2-ca19-404e-900f-a64a7964cf24' # AzureサブスクリプションIDを指定します。
+      action: 'Create Or Update Resource Group'
+      resourceGroupName: 'myResourceGroup'
+      location: 'Japan East'
+      templateLocation: 'Linked artifact'
+      csmFile: 'azuredeploy.json'
+      deploymentMode: 'Incremental'
+      deploymentName: 'AzureResourceDeployment'
+      overrideParameters: '-resourceGroupName myResourceGroup -appServicePlanName myAppServicePlan -webAppName myNextJsApp'
+    displayName: 'Deploy ARM Template'
